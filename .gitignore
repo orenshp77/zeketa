@@ -1,0 +1,7 @@
+# Large files
+*.mp4
+nul
+
+# Node modules
+node_modules/
+zeketa-store/
