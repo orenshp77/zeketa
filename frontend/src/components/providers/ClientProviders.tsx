@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -10,6 +11,9 @@ import PageLoader from '@/components/layout/PageLoader';
 import { useStore } from '@/stores/useStore';
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isAdminPage = pathname?.startsWith('/admin');
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -29,14 +33,13 @@ export default function ClientProviders({ children }: { children: React.ReactNod
   useEffect(() => {
     const timer = setTimeout(() => {
       setInitialLoad(false);
-    }, 1500);
+    }, isAdminPage ? 500 : 1500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isAdminPage]);
 
   // Handle route change loading
   useEffect(() => {
     const handleStart = () => setLoading(true);
-    const handleComplete = () => setLoading(false);
 
     // Listen for route changes
     window.addEventListener('beforeunload', handleStart);
@@ -45,6 +48,18 @@ export default function ClientProviders({ children }: { children: React.ReactNod
       window.removeEventListener('beforeunload', handleStart);
     };
   }, [setLoading]);
+
+  // Admin pages - no header/footer
+  if (isAdminPage) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <PageLoader isLoading={initialLoad} />
+        <div className={initialLoad ? 'invisible' : 'visible'}>
+          {children}
+        </div>
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
